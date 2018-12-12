@@ -1,5 +1,7 @@
 const express = require("express");
+const jwt = require("jsonwebtoken");
 const app = express();
+const fs = require("fs");
 const bodyParser = require("body-parser");
 const router = express.Router();
 
@@ -12,9 +14,19 @@ app.use((req, res, next) => {
   next();
 });
 
+//Read data from json
+const userDB = fs.readFileSync("db.json");
+const allUsers = JSON.parse(userDB).users;
+
 router.get("/", (req, res) => {
   res.json({
     message: "Welcome to the AXA API"
+  });
+});
+
+router.get("/users", (req, res) => {
+  res.json({
+    users: allUsers
   });
 });
 
