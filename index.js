@@ -24,9 +24,15 @@ router.get("/", (req, res) => {
   });
 });
 
-router.get("/users", (req, res) => {
-  res.json({
-    users: allUsers
+router.get("/users", verifyToken, (req, res) => {
+  jwt.verify(req.token, "secretkey", (err, authData) => {
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      res.json({
+        users: allUsers
+      });
+    }
   });
 });
 
@@ -43,7 +49,7 @@ router.post("/auth", (req, res, next) => {
       jwt.sign(
         { username: allUsers[index].username },
         "secretkey",
-        { expiresIn: "15s" },
+        { expiresIn: "15m" },
         (err, token) => {
           res.json({
             token
@@ -58,6 +64,41 @@ router.post("/auth", (req, res, next) => {
     err: "Username or password is incorrect"
   });
 });
+
+router.post("/token", verifyToken, (req, res) => {
+  const { username } = req.body;
+  const user = {
+    username: username
+  };
+  jwt.verify(req.token, "secretkey", (err, authData) => {
+    if (err) {
+      res.sendStatus(403);
+    } else {
+      jwt.sign({ user }, "secretkey", { expiresIn: "15m" }, (err, token) => {
+        res.json({
+          message: "Token Refreshed",
+          token
+        });
+      });
+    }
+  });
+});
+
+// Token Format
+// Authorization: Bearer <access_token>
+
+// Verify Token
+function verifyToken(req, res, next) {
+  const bearerHeader = req.headers["authorization"];
+  if (typeof bearerHeader !== "undefined") {
+    const bearer = bearerHeader.split(" ");
+    const bearerToken = bearer[1];
+    req.token = bearerToken;
+    next();
+  } else {
+    res.sendStatus(403);
+  }
+}
 
 app.use("/api", router);
 app.listen(4000, () => console.log("Server started on port 4000"));
