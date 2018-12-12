@@ -30,5 +30,34 @@ router.get("/users", (req, res) => {
   });
 });
 
+router.post("/auth", (req, res, next) => {
+  const { username, password } = req.body;
+  const user = {
+    username: username
+  };
+  for (var index in allUsers) {
+    if (
+      username === allUsers[index].username &&
+      password === allUsers[index].password
+    ) {
+      jwt.sign(
+        { username: allUsers[index].username },
+        "secretkey",
+        { expiresIn: "15s" },
+        (err, token) => {
+          res.json({
+            token
+          });
+        }
+      );
+      return;
+    }
+  }
+  res.status(401).json({
+    token: null,
+    err: "Username or password is incorrect"
+  });
+});
+
 app.use("/api", router);
 app.listen(4000, () => console.log("Server started on port 4000"));
